@@ -29,7 +29,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String email = edtEmail.getText().toString().trim();
                 if (TextUtils.isEmpty(email)) {
-                    Toast.makeText(getApplicationContext(), "Enter your email!", Toast.LENGTH_SHORT).show();
+                  //  Toast.makeText(getApplicationContext(), "Enter your email!", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 mAuth.sendPasswordResetEmail(email)
@@ -37,7 +37,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
                                 if (task.isSuccessful()) {
-                                    Toast.makeText(ResetPasswordActivity.this, "Check email to reset your password!", Toast.LENGTH_SHORT).show();
+                                  Toast.makeText(ResetPasswordActivity.this, "Check email to reset your password!", Toast.LENGTH_SHORT).show();
                                 } else {
                                     Toast.makeText(ResetPasswordActivity.this, "Fail to send reset password email!", Toast.LENGTH_SHORT).show();
                                 }

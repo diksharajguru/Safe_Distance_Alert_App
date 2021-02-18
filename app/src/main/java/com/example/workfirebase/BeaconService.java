@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -30,10 +31,19 @@ import java.security.AccessController;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -68,23 +78,24 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
     public static ArrayList<String> dangerList = new ArrayList<String>();
     private FirebaseAuth mAuth;
     FirebaseFirestore fStore;
+    private Timer myTimer;
     String userID;
+    int time= 4;
+    private final Handler mHandler = new Handler();
     public BeaconService(){
         super();
     }
     private BluetoothGatt btGatt;
     private BluetoothAdapter mBluetoothAdapter;
-    String mUserName = "socialdistancing708@gmail.com", mPassword = "SocialDistance";
+    String mUserName = "socialdistancing708@gmail.com", mPassword = "SocialDistance1";
     boolean mIsEmailSend = false;
-    private void sendEmail(String recipients) {
+    private void sendEmail(String recipients,String eName) {
         new Thread(new Runnable() {
             public void run() {
                 try {
                     GMailSender sender = new GMailSender(mUserName, mPassword);
-                    sender.sendMail("Test mail", "Maintain Social Distancing\n"+myList.size()+"\n"+myList.toString(), mUserName, recipients);
-                    //sender.sendMail("Test mail", "Maintain Social Distancing\n", mUserName, recipients);
+                    sender.sendMail("Safe Distance Alert", eName + " is in danger zone "+" with " +myList.size()+ " person.", mUserName, recipients);
                     Log.v("MainActivity", "Your mail has been sent…");
-                    Toast.makeText(BeaconService.this, "Your mail has been sent...", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -177,7 +188,6 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
             public String getName() {
                 return "ByteArrayDataSource";
             }
-
             public OutputStream getOutputStream() throws IOException {
                 throw new IOException("Not Supported”");
             }
@@ -196,12 +206,7 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         writeLine("Automate service start...");
-//        address = android.provider.Settings.Secure.getString(this.getContentResolver(),
-//                "Bluetooth address");
-//        writeLine("Bluetooth address : "+address);
-//        Log.i("Bluetooth address :",address);
         if (!isBluetoothSupported()) {
-            Toast.makeText(this, "BLE not supported", Toast.LENGTH_SHORT).show();
             stopSelf();
         }else{
             if(mBluetoothAdapter!=null && mBluetoothAdapter.isEnabled()){
@@ -275,33 +280,27 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
     @Override
     public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
         btnDiscover();
-        if(rssi > -90 && rssi < -1){
-            Vibrator v;
-            v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-            v.vibrate(50);
-
-            if(!myList.contains(device.getAddress())){
-                myList.add(device.getAddress());
-                Toast.makeText(BeaconService.this, "onLeScan: Newly Scanned :  " +device.getName() + ": " + device.getAddress() , Toast.LENGTH_SHORT).show();
-                uploadList(myList);
-                searchForAdmin();
+        if(rssi > 52){
+            if(!myList.contains(device.getAddress()+" "+device.getName())){
+                /*Vibrator v;
+                v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+              v.vibrate(50);*/
+                long[] pattern = {0,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800};
+                Vibrator v;
+                v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(pattern,-1);
+                // Toast.makeText(BeaconService.this, "New device found near to you:  " + device.getName() + ": " + device.getAddress(), Toast.LENGTH_SHORT).show();
+                myList.add(device.getAddress()+" "+device.getName());
+                if(myList.size()>=1) {
+                    new Handler().postDelayed(new Runnable(){
+                        public void run(){
+                            searchForAdmin();
+                            uploadList(myList);
+                        }
+                    },120000);
+                }
             }
-            else{
-              //  Toast.makeText(BeaconService.this, "onLeScan: Still scanning : " +device.getName() + ": " + device.getAddress() , Toast.LENGTH_SHORT).show();
-            }
         }
-        else
-        {
-           // Toast.makeText(this, "No device in danger", Toast.LENGTH_SHORT).show();
-        }
-        if(myList.isEmpty()){
-            Toast.makeText(this, "No device in danger", Toast.LENGTH_SHORT).show();
-        }
-        else{
-            Log.i(TAG, String.valueOf(myList.size()));
-            Log.i("Devices in danger : ", myList.toString());
-        }
-        //Toast.makeText(this, "Discovered", Toast.LENGTH_SHORT).show();
     }
     public static final class JSSEProvider extends Provider {
         private static final long serialVersionUID = 1L;
@@ -347,7 +346,7 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
                 Log.v("BLEService", "BLE Services onServicesDiscovered");
                 //Get service
                 List<BluetoothGattService> services = gatt.getServices();
-                //writeLine("Automate service discover service imei: " +imei);
+
             }
         }
         @Override
@@ -364,7 +363,7 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
         h.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),message,Toast.LENGTH_SHORT).show();
+
             }
         });
     }
@@ -395,21 +394,20 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
                     if(task.isSuccessful()){
                         DocumentSnapshot documentSnapshot = task.getResult();
                         if(documentSnapshot.exists()){
-                            //Toast.makeText(getApplicationContext(),"Function Snapshot "+"Document snapshot exists "+documentSnapshot.getString("fName"),Toast.LENGTH_SHORT).show();
                             String companyName = documentSnapshot.getString("company");
-                            //Toast.makeText(getApplicationContext(), "Company of the logged in : "+companyName, Toast.LENGTH_SHORT).show();
+                            String employeeName = documentSnapshot.getString("fName");
                             Task<QuerySnapshot> query = fStore.collection("admin").whereEqualTo("acompany", companyName).get()
                                     .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                         @Override
                                         public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                             if (task.isSuccessful()) {
                                                 for (QueryDocumentSnapshot document : task.getResult()) {
-                                                    //Log.d("Function Query", document.getId() + " => " + document.get("aemail"));
-                                                    Toast.makeText(BeaconService.this, "Admin's email : "+document.get("aemail"), Toast.LENGTH_SHORT).show();
-                                                    sendEmail(document.getString("aemail"));
+                                                    // Toast.makeText(BeaconService.this, "You are found in danger..Sending email to : "+document.get("aemail"), Toast.LENGTH_SHORT).show();
+                                                    sendEmail(document.getString("aemail"),employeeName);
                                                 }
                                             } else {
                                                 Log.d("Function Query", "Error getting documents: ", task.getException());
+                                                //Toast.makeText(BeaconService.this, "Could not find admin of your company.. Hence, cannot send mail", Toast.LENGTH_LONG).show();
                                             }
                                         }
                                     });
@@ -422,20 +420,19 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
                 }
             });
         }else{
-            Log.i("USer : ","Null");
+            Log.i("User : ","Null");
         }
     }
     public void uploadList(List<String> myList){
         FirebaseUser mFirebaseUser = mAuth.getCurrentUser();
         if (mFirebaseUser != null){
-            Toast.makeText(BeaconService.this, "From displayName Function : "+userID, Toast.LENGTH_SHORT).show();
             DocumentReference documentReference = fStore.collection("employee").document(userID);
             Map<String,Object> user = new HashMap<>();
             user.put("dangerList : ",myList);
             documentReference.update(user).addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    writeLine("Uploaded danger List");
+                    writeLine("Uploading Danger List");
                 }
             });
         }
