@@ -4,12 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/black">
+    android:background="@drawable/ani">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/black"
+
         tools:context=".Employee">
 
         <EditText
@@ -20,7 +20,8 @@
             android:ems="10"
             android:hint="Email Address"
             android:inputType="textEmailAddress"
-            android:textColor="#FFFFFF"
+            android:textColor="#000000"
+            android:textColorHint="#302121"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
@@ -35,7 +36,9 @@
             android:ems="10"
             android:hint="Password"
             android:inputType="textPassword"
-            android:textColor="#FFFFFF"
+            android:textColor="#000000"
+            android:textColorHint="#302121"
+            android:textColorLink="#000000"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
@@ -82,7 +85,8 @@
             android:layout_marginTop="41dp"
             android:layout_marginEnd="30dp"
             android:text="Forgot Password?"
-            android:textSize="18sp"
+            android:textColor="#000000"
+            android:textSize="22sp"
             app:layout_constraintEnd_toStartOf="@+id/register"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/signIn" />
@@ -91,11 +95,12 @@
             android:id="@+id/register"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="50dp"
+            android:layout_marginStart="5dp"
             android:layout_marginTop="40dp"
             android:layout_marginEnd="40dp"
             android:text="Register Here"
-            android:textSize="18sp"
+            android:textColor="#000000"
+            android:textSize="22sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/forgotPassword"
             app:layout_constraintTop_toBottomOf="@+id/signIn" />
@@ -117,12 +122,12 @@
             android:id="@+id/admin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="52dp"
+            android:layout_marginTop="48dp"
             android:text="Admin ? Click Here"
             android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_bias="0.58"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/forgotPassword" />
 
@@ -133,7 +138,8 @@
             android:layout_marginTop="20dp"
             android:fontFamily="sans-serif-black"
             android:text="Employee Login"
-            android:textSize="18sp"
+            android:textColor="#302121"
+            android:textSize="22sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

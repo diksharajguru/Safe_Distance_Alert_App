@@ -2,21 +2,13 @@ package com.example.workfirebase;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
@@ -24,7 +16,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.LocationRequest;
@@ -40,18 +31,18 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-
-import static java.security.AccessController.getContext;
 public class Employee extends AppCompatActivity implements View.OnClickListener {
     private TextView register, admin, forgotPassword;
     private EditText editTextEmail, editTextPassword;
     private Button signIn;
+    private BluetoothAdapter BA;
     private FirebaseAuth mAuth;
     FirebaseFirestore fStore;
     private ProgressBar progressBar;
     BluetoothManager manager;
     BluetoothAdapter mBluetoothAdapter;
     private LocationSettingsRequest.Builder builder;
+    private static final String TAG = "Employee";
     private final int REQUEST_CHECK_CODE = 8989;
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -101,8 +92,20 @@ public class Employee extends AppCompatActivity implements View.OnClickListener 
         editTextPassword = (EditText) findViewById(R.id.password);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        enabledisableBT();
+        BA = BluetoothAdapter.getDefaultAdapter();
+        on();
     }
+
+    private void on() {
+        if (!BA.isEnabled()) {
+            Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(turnOn, 0);
+            Toast.makeText(getApplicationContext(), "Turned on",Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Already on", Toast.LENGTH_LONG).show();
+        }
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void checkLocation() {
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP){
@@ -112,11 +115,6 @@ public class Employee extends AppCompatActivity implements View.OnClickListener 
                 this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1001); //Any number
             }
         }else{
-        }
-    }
-    public void enabledisableBT(){
-        if(!mBluetoothAdapter.isEnabled()){
-            mBluetoothAdapter.enable();
         }
     }
     @Override
@@ -153,12 +151,13 @@ public class Employee extends AppCompatActivity implements View.OnClickListener 
             editTextPassword.requestFocus();
             return;
         }
-
         if (password.length() <6) {
-      /*Change 9*/   editTextPassword.setError("Password of length of 6(at least) is required");
+            editTextPassword.setError("Password of length of 6(at least) is required");
             editTextPassword.requestFocus();
             return;
         }
+
+
         progressBar.setVisibility(View.VISIBLE);
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override

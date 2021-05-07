@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -70,6 +71,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+
+import static java.lang.Thread.sleep;
+
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BeaconService extends Service implements BluetoothAdapter.LeScanCallback{
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -120,7 +124,8 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
             props.put("mail.smtp.host", "smtp.gmail.com");
             props.put("mail.smtp.port", "587");
             props.put("mail.smtp.socketFactory.port", "465");
-            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl" +  "" +
+                    ".SSLSocketFactory");
             props.put("mail.smtp.socketFactory.fallback", "false");
             props.setProperty("mail.host", mailhost);
             session = Session.getDefaultInstance(props, this);
@@ -280,22 +285,34 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
     @Override
     public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
         btnDiscover();
-        if(rssi > 52){
+        if(rssi > -80 && rssi<-1){
             if(!myList.contains(device.getAddress()+" "+device.getName())){
-                /*Vibrator v;
+                final MediaPlayer mp = MediaPlayer.create(BeaconService.this, R.raw.vibration);
+                Handler mHandler = new Handler();
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        mp.start();
+                        //smp.setLooping(true);
+                    }
+                }, mp.getDuration());
+
+
+                // no need to call prepare(); create() does that for you
+               /* *//*Vibrator v;
                 v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-              v.vibrate(50);*/
+              v.vibrate(50);*//*
                 long[] pattern = {0,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800,80,800};
                 Vibrator v;
                 v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                v.vibrate(pattern,-1);
+                v.vibrate(pattern,-1);*/
                 // Toast.makeText(BeaconService.this, "New device found near to you:  " + device.getName() + ": " + device.getAddress(), Toast.LENGTH_SHORT).show();
                 myList.add(device.getAddress()+" "+device.getName());
                 if(myList.size()>=1) {
+                    uploadList(myList);
                     new Handler().postDelayed(new Runnable(){
                         public void run(){
+
                             searchForAdmin();
-                            uploadList(myList);
                         }
                     },120000);
                 }
@@ -402,12 +419,10 @@ public class BeaconService extends Service implements BluetoothAdapter.LeScanCal
                                         public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                             if (task.isSuccessful()) {
                                                 for (QueryDocumentSnapshot document : task.getResult()) {
-                                                    // Toast.makeText(BeaconService.this, "You are found in danger..Sending email to : "+document.get("aemail"), Toast.LENGTH_SHORT).show();
                                                     sendEmail(document.getString("aemail"),employeeName);
                                                 }
                                             } else {
                                                 Log.d("Function Query", "Error getting documents: ", task.getException());
-                                                //Toast.makeText(BeaconService.this, "Could not find admin of your company.. Hence, cannot send mail", Toast.LENGTH_LONG).show();
                                             }
                                         }
                                     });
